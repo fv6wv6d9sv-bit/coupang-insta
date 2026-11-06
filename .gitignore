@@ -1,0 +1,4 @@
+.env
+docs/preview.html
+__pycache__/
+.pytest_cache/

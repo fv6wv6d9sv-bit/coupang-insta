@@ -1,0 +1,58 @@
+name: 인스타그램 자동 게시
+
+on:
+  schedule:
+    # 매일 한국시간 낮 12시 17분 (UTC 03:17). 시간을 바꾸려면 이 줄을 수정하세요.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      keyword:
+        description: "키워드 (비우면 keywords.txt에서 순서대로)"
+        required: false
+      publish:
+        description: "실제로 게시"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instagram-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Seoul
+      COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+      COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+      COUPANG_SUB_ID: ${{ vars.COUPANG_SUB_ID }}
+      IG_USER_ID: ${{ secrets.IG_USER_ID }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      LINK_PAGE_TITLE: ${{ vars.LINK_PAGE_TITLE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+
+      - name: 게시
+        env:
+          KEYWORD: ${{ inputs.keyword }}
+          PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+        run: |
+          ARGS=(--count 5)
+          if [ -n "$KEYWORD" ]; then ARGS+=("$KEYWORD"); else ARGS+=(--keywords-file keywords.txt); fi
+          if [ "$PUBLISH" = "true" ]; then ARGS+=(--publish); fi
+          python main.py "${ARGS[@]}"
+
+      - name: 링크 페이지 / 기록 저장
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html docs/posts.json 2>/dev/null || true
+          git diff --cached --quiet || { git commit -m "게시 기록 업데이트"; git push; }

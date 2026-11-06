@@ -73,3 +73,13 @@ def test_publish_flow_updates_page(tmp_path, monkeypatch):
     page = (tmp_path / "docs/index.html").read_text(encoding="utf-8")
     assert page.index("보조배터리") < page.index("이어폰")  # 최신순
     assert "link.coupang.com/a/sample1" in page
+
+
+def test_instagram_login_token_autodetects_host_and_user_id(monkeypatch):
+    monkeypatch.delenv("IG_GRAPH_BASE", raising=False)
+    s = MagicMock()
+    s.get.return_value = resp({"user_id": "1789", "username": "me"})
+    ig = InstagramClient(None, "IGAAxyz", session=s)
+    assert ig.user_id == "1789"
+    assert s.get.call_args.args[0] == "https://graph.instagram.com/v23.0/me"
+    assert InstagramClient("1", "EAAxyz", session=s).base.startswith("https://graph.facebook.com/")

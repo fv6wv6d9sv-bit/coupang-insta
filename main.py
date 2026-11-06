@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         print("게시하려면 --publish 를 붙이세요.")
         return 0
 
-    ig = InstagramClient(need("IG_USER_ID"), need("IG_ACCESS_TOKEN"))
+    ig = InstagramClient(os.environ.get("IG_USER_ID") or None, need("IG_ACCESS_TOKEN"))
     if args.reel_video_url:
         media_id = ig.publish_reel(args.reel_video_url, caption)
     elif len(products) >= 2:

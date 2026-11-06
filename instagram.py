@@ -1,7 +1,9 @@
-"""Instagram Graph API 게시 클라이언트 (이미지 / 캐러셀 / 릴스).
+"""Instagram API 게시 클라이언트 (이미지 / 캐러셀 / 릴스).
 
-필요 조건: 페이스북 페이지와 연결된 인스타그램 '비즈니스' 또는 '크리에이터' 계정,
-instagram_content_publish 권한이 있는 액세스 토큰.
+두 가지 토큰을 모두 지원:
+- 인스타그램 로그인 토큰 (IGAA...로 시작) → graph.instagram.com  ※ 페이스북 페이지 불필요
+- 페이스북 로그인 토큰 (EAA...로 시작)   → graph.facebook.com
+필요 조건: 인스타그램 '비즈니스' 또는 '크리에이터' 계정.
 """
 
 from __future__ import annotations
@@ -11,7 +13,15 @@ import time
 
 import requests
 
-GRAPH_BASE = os.environ.get("IG_GRAPH_BASE", "https://graph.facebook.com/v23.0")
+API_VERSION = "v23.0"
+
+
+def graph_base(token: str) -> str:
+    override = os.environ.get("IG_GRAPH_BASE")
+    if override:
+        return override.rstrip("/")
+    host = "graph.instagram.com" if token.startswith("IG") else "graph.facebook.com"
+    return f"https://{host}/{API_VERSION}"
 
 
 class InstagramError(RuntimeError):
@@ -21,19 +31,26 @@ class InstagramError(RuntimeError):
 class InstagramClient:
     def __init__(
         self,
-        user_id: str,
+        user_id: str | None,
         access_token: str,
         session: requests.Session | None = None,
         poll_interval: float = 5.0,
     ):
-        self.user_id = user_id
         self.token = access_token
+        self.base = graph_base(access_token)
         self.session = session or requests.Session()
         self.poll_interval = poll_interval
+        self.user_id = user_id or self._lookup_user_id()
+
+    def _lookup_user_id(self) -> str:
+        """IG_USER_ID를 안 넣었으면 토큰으로 계정 ID를 조회 (인스타그램 로그인 토큰 전용)."""
+        if "graph.instagram.com" not in self.base:
+            raise InstagramError("페이스북 로그인 토큰은 IG_USER_ID 를 직접 넣어야 합니다")
+        return str(self._call("GET", "me", fields="user_id,username")["user_id"])
 
     def _call(self, method: str, path: str, **params: object) -> dict:
         params["access_token"] = self.token
-        url = f"{GRAPH_BASE}/{path}"
+        url = f"{self.base}/{path}"
         if method == "GET":
             resp = self.session.get(url, params=params, timeout=60)
         else:

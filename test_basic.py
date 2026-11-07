@@ -83,3 +83,11 @@ def test_instagram_login_token_autodetects_host_and_user_id(monkeypatch):
     assert ig.user_id == "1789"
     assert s.get.call_args.args[0] == "https://graph.instagram.com/v23.0/me"
     assert InstagramClient("1", "EAAxyz", session=s).base.startswith("https://graph.facebook.com/")
+
+
+def test_facebook_token_looks_up_ig_account_from_pages(monkeypatch):
+    monkeypatch.delenv("IG_GRAPH_BASE", raising=False)
+    s = MagicMock()
+    s.get.return_value = resp({"data": [{"id": "p1"}, {"id": "p2", "instagram_business_account": {"id": "1784"}}]})
+    assert InstagramClient(None, "EAAxyz", session=s).user_id == "1784"
+    assert s.get.call_args.args[0] == "https://graph.facebook.com/v23.0/me/accounts"

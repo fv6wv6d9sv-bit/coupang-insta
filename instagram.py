@@ -44,9 +44,17 @@ class InstagramClient:
 
     def _lookup_user_id(self) -> str:
         """IG_USER_ID를 안 넣었으면 토큰으로 계정 ID를 조회 (인스타그램 로그인 토큰 전용)."""
-        if "graph.instagram.com" not in self.base:
-            raise InstagramError("페이스북 로그인 토큰은 IG_USER_ID 를 직접 넣어야 합니다")
-        return str(self._call("GET", "me", fields="user_id,username")["user_id"])
+        if "graph.instagram.com" in self.base:
+            return str(self._call("GET", "me", fields="user_id,username")["user_id"])
+        # 페이스북/통합 로그인 토큰(EAA...): 연결된 페이지의 인스타그램 계정을 찾음
+        pages = self._call("GET", "me/accounts", fields="instagram_business_account").get("data", [])
+        for page in pages:
+            ig = page.get("instagram_business_account")
+            if ig and ig.get("id"):
+                return str(ig["id"])
+        raise InstagramError(
+            "토큰으로 인스타그램 계정 ID를 찾지 못했습니다. GitHub Secret에 IG_USER_ID 를 직접 넣어 주세요."
+        )
 
     def _call(self, method: str, path: str, **params: object) -> dict:
         params["access_token"] = self.token

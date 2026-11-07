@@ -1,0 +1,6 @@
+keyword,name,price,link,image
+# 쿠팡 Open API 키가 없을 때 사용. 파트너스 사이트 '링크 생성'으로 만든 링크를 넣으세요.
+# 같은 keyword 끼리 한 영상이 됩니다(2~5개 권장). 위에서부터 순서대로 하루에 한 묶음씩 사용.
+# image 는 이미지 주소(https://...) 또는 저장소에 올린 파일 경로(images/a.jpg). 비워도 됩니다.
+# 예시 (# 지우고 실제 정보로 바꾸세요):
+# 무선 이어폰,OO 노이즈캔슬링 블루투스 이어폰,39900,https://link.coupang.com/a/XXXX,

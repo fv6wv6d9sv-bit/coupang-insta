@@ -1,9 +1,9 @@
 name: 인스타그램 자동 게시
 
 on:
-  schedule:
-    # 매일 한국시간 낮 12시 17분 (UTC 03:17). 시간을 바꾸려면 이 줄을 수정하세요.
-    - cron: "17 3 * * *"
+  # 자동 실행을 다시 켜려면 아래 두 줄의 # 을 지우세요 (매일 한국시간 12:17)
+  # schedule:
+  #   - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       keyword:
@@ -43,7 +43,7 @@ jobs:
       - name: 게시
         env:
           KEYWORD: ${{ inputs.keyword }}
-          PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+          PUBLISH: ${{ inputs.publish }}
         run: |
           ARGS=(--count 5)
           if [ -n "$KEYWORD" ]; then ARGS+=("$KEYWORD"); else ARGS+=(--keywords-file keywords.txt); fi

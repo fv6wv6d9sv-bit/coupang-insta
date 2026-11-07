@@ -79,3 +79,19 @@ text-decoration:none;color:inherit;box-shadow:0 1px 3px #0001}}
 {body}
 </body></html>
 """
+
+
+def build_shorts_text(keyword: str, products: list[Product], link_url: str = "", extra_tags: list[str] | None = None) -> tuple[str, str]:
+    """유튜브 쇼츠 (제목, 설명) 생성. 제목은 100자 제한."""
+    title = f"{keyword} 추천 TOP {len(products)} #shorts"[:100]
+    lines = [f"[광고] {DISCLOSURE}", "", f"🛒 {keyword} 추천 TOP {len(products)}"]
+    for i, p in enumerate(products, 1):
+        price = f" - {p.price:,}원" if p.price else ""
+        lines.append(f"{i}. {_short(p.name, 50)}{price}")
+    lines.append("")
+    lines.append(f"👉 구매 링크: {link_url}" if link_url else "👉 구매 링크는 채널 프로필 링크에서 확인하세요!")
+    lines.append("※ 가격은 변동될 수 있습니다.")
+    lines.append("")
+    tags = ["#shorts"] + build_hashtags(keyword, extra_tags)
+    lines.append(" ".join(tags[:15]))
+    return title, "\n".join(lines)

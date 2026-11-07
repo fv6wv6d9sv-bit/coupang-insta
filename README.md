@@ -1,33 +1,32 @@
-# 쿠팡 파트너스 → 인스타그램 자동 게시
+# 쿠팡 파트너스 → 유튜브 쇼츠 자동 제작
 
-매일 정해진 시간에 GitHub Actions가 `keywords.txt`의 키워드를 순서대로 골라
-쿠팡 상품을 검색하고, 인스타그램에 캐러셀로 게시합니다.
-상품 링크는 GitHub Pages(`docs/index.html`)에 모아 프로필 링크로 씁니다.
+매일 아침 GitHub가 쿠팡 상품으로 **쇼츠 영상(세로 1080x1920)과 제목·설명**을 만들어
+**Releases** 페이지에 올려 둡니다. 휴대폰으로 받아서 유튜브 앱에 올리기만 하면 됩니다.
 
-## GitHub 설정 (휴대폰 브라우저로도 가능)
-1. **Secrets 등록**: Settings > Secrets and variables > Actions > New repository secret
-   - `COUPANG_ACCESS_KEY`, `COUPANG_SECRET_KEY`, `IG_USER_ID`, `IG_ACCESS_TOKEN`
-   - (선택, Variables 탭) `COUPANG_SUB_ID`, `LINK_PAGE_TITLE`
-2. **Pages 켜기**: Settings > Pages > Source: Deploy from a branch > `main` / `/docs`
-   → 주소(`https://아이디.github.io/저장소이름/`)를 인스타 프로필 링크에 등록
-3. **테스트**: Actions > 인스타그램 자동 게시 > Run workflow (publish 체크 해제 시 미리보기만)
+## 매일 할 일 (1분)
+1. 저장소 오른쪽의 **Releases** (또는 `/releases` 주소) → 맨 위 항목
+2. **shorts.mp4** 눌러 저장
+3. 유튜브 앱 ＋ → 영상 선택 → 제목/설명 붙여넣기 → **유료 프로모션 포함** 켜기 → 업로드
+
+## 상품 넣는 방법 (둘 중 하나)
+- **쿠팡 Open API 키가 있으면**: Settings > Secrets and variables > Actions 에
+  `COUPANG_ACCESS_KEY`, `COUPANG_SECRET_KEY` 등록 → `keywords.txt` 키워드를 순서대로 자동 검색
+- **키가 없으면**: `products.csv` 에 파트너스 '링크 생성'으로 만든 링크를 직접 적기
+  (같은 keyword 끼리 한 영상, 위에서부터 하루 한 묶음)
+
+## 링크 페이지 (프로필 링크)
+쇼츠 설명란 링크는 눌리지 않으므로, 상품 링크 모음 페이지를 채널 프로필 링크에 겁니다.
+Settings > Pages > Deploy from a branch > `main` / `/docs` → `https://아이디.github.io/coupang-insta/`
 
 ## 바꾸기
-- 키워드: `keywords.txt` 수정
-- 게시 시간: `.github/workflows/post.yml`의 `cron` (UTC 기준, 한국시간 -9시간)
+- 만드는 시간: `.github/workflows/shorts.yml` 의 `cron` (UTC 기준)
+- 배경음악: 저작권 없는 음악을 `music.mp3` 로 올리면 자동으로 들어감 (또는 유튜브 앱에서 추가)
+- 지금 바로 만들기: Actions > 유튜브 쇼츠 영상 만들기 > Run workflow
 
 ## 로컬 실행
 ```bash
-pip install -r requirements.txt
-cp .env.example .env
-python main.py "무선 이어폰" --demo
-python main.py --keywords-file keywords.txt --publish
+pip install -r requirements.txt   # + ffmpeg, 한글 폰트 필요
+python make_shorts.py --demo
 ```
 
-## 주의
-- 인스타 캡션 링크는 클릭되지 않으므로 Pages 링크 페이지를 프로필에 거세요.
-- Meta 액세스 토큰은 종류에 따라 만료됩니다(장기 사용자 토큰 약 60일). 만료되지 않는
-  페이지 토큰이나 시스템 사용자 토큰을 쓰거나, 만료 전에 Secret을 갱신하세요.
-  게시가 실패하면 GitHub가 이메일로 알려줍니다.
-- 광고 고지 문구는 캡션과 링크 페이지에 자동 포함됩니다. 지우지 마세요.
-- 같은 내용을 과하게 반복 게시하면 계정이 제한될 수 있습니다.
+인스타그램 자동 게시(`main.py`, `post.yml`)도 남아 있으며 수동 실행만 켜져 있습니다.

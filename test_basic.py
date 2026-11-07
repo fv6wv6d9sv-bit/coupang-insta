@@ -91,3 +91,31 @@ def test_facebook_token_looks_up_ig_account_from_pages(monkeypatch):
     s.get.return_value = resp({"data": [{"id": "p1"}, {"id": "p2", "instagram_business_account": {"id": "1784"}}]})
     assert InstagramClient(None, "EAAxyz", session=s).user_id == "1784"
     assert s.get.call_args.args[0] == "https://graph.facebook.com/v23.0/me/accounts"
+
+
+def test_csv_groups_rotation_and_shorts_text(tmp_path, monkeypatch):
+    import argparse
+
+    import make_shorts
+    from caption import build_shorts_text
+
+    csv_path = tmp_path / "p.csv"
+    csv_path.write_text(
+        "keyword,name,price,link,image\n# 주석\n"
+        "이어폰,A 이어폰,\"39,900\",https://link.coupang.com/a/1,\n"
+        "가습기,B 가습기,25000,https://link.coupang.com/a/2,\n"
+        "이어폰,C 이어폰,10000,https://link.coupang.com/a/3,\n"
+        "빈링크,D,1000,,\n",
+        encoding="utf-8",
+    )
+    groups = make_shorts.load_csv_groups(str(csv_path))
+    assert [(k, [p.name for p in ps]) for k, ps in groups] == [("이어폰", ["A 이어폰", "C 이어폰"]), ("가습기", ["B 가습기"])]
+    assert groups[0][1][0].price == 39900
+
+    monkeypatch.delenv("COUPANG_ACCESS_KEY", raising=False)
+    ns = argparse.Namespace(demo=False, keyword=None, count=5, keywords_file="", products_file=str(csv_path))
+    assert make_shorts.choose_products(ns, posts=[{}])[0] == "가습기"
+
+    title, desc = build_shorts_text("이어폰", groups[0][1], "https://x.github.io/r/")
+    assert title == "이어폰 추천 TOP 2 #shorts"
+    assert desc.startswith("[광고]") and "39,900원" in desc and "https://x.github.io/r/" in desc
